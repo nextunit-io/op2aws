@@ -17,7 +17,7 @@ type OpAWS struct {
 	assume_role string
 }
 
-func (client *OpAWS) generateStsClient() (*sts.STS, error) {
+func (client OpAWS) generateStsClient() (*sts.STS, error) {
 	accessKeyId, err := client.opClient.GetAccessKeyId()
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (client *OpAWS) generateStsClient() (*sts.STS, error) {
 	})), nil
 }
 
-func (client *OpAWS) generateSessionToken() (*sts.Credentials, error) {
+func (client OpAWS) generateSessionToken() (*sts.Credentials, error) {
 	stsClient, err := client.generateStsClient()
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (client *OpAWS) generateSessionToken() (*sts.Credentials, error) {
 	return output.Credentials, nil
 }
 
-func (client *OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) {
+func (client OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) {
 	stsClient, err := client.generateStsClient()
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (client *OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) 
 }
 
 // TODO: Missing - static credentials
-func (client *OpAWS) GetCredentials() (*sts.Credentials, error) {
+func (client OpAWS) GetCredentials() (*sts.Credentials, error) {
 	if len(client.assume_role) == 0 {
 		return client.generateSessionToken()
 	}
@@ -94,11 +94,11 @@ func (client *OpAWS) GetCredentials() (*sts.Credentials, error) {
 	return client.generateAssumedRoleCredentials()
 }
 
-func (client *OpAWS) GetMFA() string {
+func (client OpAWS) GetMFA() string {
 	return client.mfa
 }
 
-func (client *OpAWS) GetAssumeRole() string {
+func (client OpAWS) GetAssumeRole() string {
 	return client.assume_role
 }
 

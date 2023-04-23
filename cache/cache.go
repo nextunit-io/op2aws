@@ -23,7 +23,7 @@ type AWSCredentialsCacheClient struct {
 	assume_role string
 }
 
-func (cache *AWSCredentialsCacheClient) checkCacheDir() {
+func (cache AWSCredentialsCacheClient) checkCacheDir() {
 	_, err := os.Stat(cache.path)
 	if err == nil {
 		return
@@ -32,12 +32,12 @@ func (cache *AWSCredentialsCacheClient) checkCacheDir() {
 	os.MkdirAll(cache.path, FILEMODE)
 }
 
-func (cache *AWSCredentialsCacheClient) getFilePath() string {
+func (cache AWSCredentialsCacheClient) getFilePath() string {
 	filehash := md5.Sum([]byte(fmt.Sprintf("%s-%s-%s-%s", cache.vault, cache.item, cache.mfa, cache.assume_role)))
 	return fmt.Sprintf("%s/%x", cache.path, string(filehash[:]))
 }
 
-func (cache *AWSCredentialsCacheClient) Store(credentials *sts.Credentials) error {
+func (cache AWSCredentialsCacheClient) Store(credentials *sts.Credentials) error {
 	cache.checkCacheDir()
 	filepath := cache.getFilePath()
 
@@ -49,7 +49,7 @@ func (cache *AWSCredentialsCacheClient) Store(credentials *sts.Credentials) erro
 	return ioutil.WriteFile(filepath, content, FILEMODE)
 }
 
-func (cache *AWSCredentialsCacheClient) GetCache() (*sts.Credentials, error) {
+func (cache AWSCredentialsCacheClient) GetCache() (*sts.Credentials, error) {
 	cache.checkCacheDir()
 	filepath := cache.getFilePath()
 
