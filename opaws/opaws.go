@@ -1,7 +1,7 @@
 package opaws
 
 import (
-	"nextunit/op2aws/onepassword"
+	"nextunit/op2aws/awsvault"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -12,7 +12,7 @@ import (
 var DEFAULT_SESSION_NAME = "op2aws-session"
 
 type OpAWS struct {
-	opClient    *onepassword.OnePassword
+	opClient    awsvault.Vault
 	mfa         string
 	assume_role string
 }
@@ -110,6 +110,6 @@ func (client *OpAWS) AssumeRole(assume_role string) {
 	client.assume_role = assume_role
 }
 
-func New(opClient *onepassword.OnePassword) *OpAWS {
+func New(opClient awsvault.Vault) *OpAWS {
 	return &OpAWS{opClient: opClient}
 }

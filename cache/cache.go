@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"nextunit/op2aws/onepassword"
+	"nextunit/op2aws/awsvault"
 	"nextunit/op2aws/opaws"
 	"os"
 	"time"
@@ -74,7 +74,7 @@ func (cache AWSCredentialsCacheClient) GetCache() (*sts.Credentials, error) {
 	return credentials, nil
 }
 
-func (cache *AWSCredentialsCacheClient) GenerateFromOP(client *onepassword.OnePassword) {
+func (cache *AWSCredentialsCacheClient) GenerateFromOP(client awsvault.Vault) {
 	cache.vault = client.GetVault()
 	cache.item = client.GetItem()
 }

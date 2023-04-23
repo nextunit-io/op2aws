@@ -3,8 +3,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"nextunit/op2aws/awsvault"
 	"nextunit/op2aws/cache"
-	"nextunit/op2aws/onepassword"
 	"nextunit/op2aws/opaws"
 	"os"
 
@@ -13,7 +13,7 @@ import (
 )
 
 func runAwsProfileCliCommand(vault, item, mfaArn, assumeRoleArn string, forceCache bool) {
-	opClient := onepassword.New(vault, item)
+	opClient := awsvault.NewOnePasswordVault(vault, item)
 
 	awsClient := opaws.New(opClient)
 	awsClient.UseMFA(mfaArn)
@@ -59,7 +59,7 @@ func addAwsProfileCLICMD() {
 	cmd := &cobra.Command{
 		Use:   "cli-profile",
 		Short: "Functionality to use inside of the .aws/config file",
-		Long:  "This function can be used inside of the .aws/config file as profile:\n\n[profile nextunit]\n   credential_process = sh -c '\"op2aws\" \"cli-profile\" \"1password-vault\" \"1password-item\" \"-m\" \"mfa-arn\" \"-a\" \"assume-role-arn\"",
+		Long:  "This function can be used inside of the .aws/config file as profile:\n\n[profile nextunit]\n   credential_process = sh -c '\"op2aws\" \"cli-profile\" \"1password-vault\" \"1password-item\" \"-m\" \"mfa-arn\" \"-a\" \"assume-role-arn\"'",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			runAwsProfileCliCommand(args[0], args[1], mfaArn, assumeRoleArn, forceCache)

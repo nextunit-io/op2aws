@@ -1,4 +1,4 @@
-package onepassword
+package awsvault
 
 import (
 	"fmt"
@@ -21,6 +21,8 @@ type OnePassword struct {
 	accessKeyField       string
 	secretAccessKeyField string
 	mfaField             string
+
+	Vault
 }
 
 func getOutput(cmd *exec.Cmd) (string, error) {
@@ -52,7 +54,7 @@ func (client *OnePassword) GetOTP() (string, error) {
 	return getOutput(cmd)
 }
 
-func (client *OnePassword) CLIAvailable() bool {
+func (client *OnePassword) VaultAvailable() bool {
 	cmd := exec.Command(CLI_COMMAND)
 	_, err := cmd.Output()
 
@@ -77,7 +79,7 @@ func (client *OnePassword) SetDefaults(accessKeyField, secretAccessKeyField, mfa
 	client.mfaField = mfaField
 }
 
-func New(vault, item string) *OnePassword {
+func NewOnePasswordVault(vault, item string) *OnePassword {
 	return &OnePassword{
 		vault:                vault,
 		item:                 item,
