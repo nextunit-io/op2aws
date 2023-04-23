@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"nextunit/op2aws/cache"
 	"nextunit/op2aws/onepassword"
 	"nextunit/op2aws/opaws"
 	"os"
 
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/spf13/cobra"
 )
 
@@ -21,20 +23,32 @@ func runAwsProfileCliCommand(vault, item, mfaArn, assumeRoleArn string, forceCac
 	cacheClient.GenerateFromOP(opClient)
 	cacheClient.GenerateFromOPAWS(awsClient)
 
-	credentials, err := cacheClient.GetCache()
+	var credentials *sts.Credentials
+	cacheCredentials, err := cacheClient.GetCache()
 	handleError(err)
 
-	if credentials == nil || forceCache {
+	if cacheCredentials == nil || forceCache {
 		credentials, err := awsClient.GetCredentials()
 		handleError(err)
 
 		err = cacheClient.Store(credentials)
 		handleError((err))
-
-		fmt.Println(credentials)
 	} else {
-		fmt.Println(credentials)
+		credentials = cacheCredentials
 	}
+
+	credentialsByteString, err := json.Marshal(credentials)
+	handleError(err)
+
+	var credentialsInterface map[string]interface{}
+	err = json.Unmarshal(credentialsByteString, &credentialsInterface)
+	handleError(err)
+
+	credentialsInterface["Version"] = 1
+	output, err := json.Marshal(credentialsInterface)
+	handleError(err)
+
+	fmt.Println(string(output))
 }
 
 func addAwsProfileCLICMD() {
