@@ -33,26 +33,26 @@ func getOutput(cmd *exec.Cmd) (string, error) {
 	return strings.TrimSpace(string(stdout)), nil
 }
 
-func (client OnePassword) getItem(path string) (string, error) {
+func (client *OnePassword) getItem(path string) (string, error) {
 	cmd := exec.Command(CLI_COMMAND, "read", path)
 	return getOutput(cmd)
 }
 
-func (client OnePassword) GetAccessKeyId() (string, error) {
+func (client *OnePassword) GetAccessKeyId() (string, error) {
 	return client.getItem(fmt.Sprintf(OP_GET_ITEM_PATH, client.vault, client.item, client.accessKeyField))
 }
 
-func (client OnePassword) GetSecretAccessKey() (string, error) {
+func (client *OnePassword) GetSecretAccessKey() (string, error) {
 	return client.getItem(fmt.Sprintf(OP_GET_ITEM_PATH, client.vault, client.item, client.secretAccessKeyField))
 }
 
-func (client OnePassword) GetOTP() (string, error) {
+func (client *OnePassword) GetOTP() (string, error) {
 	// TODO: check if there is an option to retrieve a otp inside of a specific label when it comes to multiple otp inside of one item
 	cmd := exec.Command(CLI_COMMAND, "item", "get", client.item, "--vault", client.vault, "--otp")
 	return getOutput(cmd)
 }
 
-func (client OnePassword) CLIAvailable() bool {
+func (client *OnePassword) CLIAvailable() bool {
 	cmd := exec.Command(CLI_COMMAND)
 	_, err := cmd.Output()
 
@@ -63,7 +63,15 @@ func (client OnePassword) CLIAvailable() bool {
 	return true
 }
 
-func (client OnePassword) SetDefaults(accessKeyField, secretAccessKeyField, mfaField string) {
+func (client *OnePassword) GetVault() string {
+	return client.vault
+}
+
+func (client *OnePassword) GetItem() string {
+	return client.item
+}
+
+func (client *OnePassword) SetDefaults(accessKeyField, secretAccessKeyField, mfaField string) {
 	client.accessKeyField = accessKeyField
 	client.secretAccessKeyField = secretAccessKeyField
 	client.mfaField = mfaField

@@ -1,7 +1,6 @@
 package opaws
 
 import (
-	"nextunit/op2aws/cache"
 	"nextunit/op2aws/onepassword"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,14 +9,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 )
 
+var DEFAULT_SESSION_NAME = "op2aws-session"
+
 type OpAWS struct {
-	cacheClient *cache.CacheClient
 	opClient    *onepassword.OnePassword
 	mfa         string
 	assume_role string
 }
 
-func (client OpAWS) generateStsClient() (*sts.STS, error) {
+func (client *OpAWS) generateStsClient() (*sts.STS, error) {
 	accessKeyId, err := client.opClient.GetAccessKeyId()
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (client OpAWS) generateStsClient() (*sts.STS, error) {
 	})), nil
 }
 
-func (client OpAWS) generateSessionToken() (*sts.Credentials, error) {
+func (client *OpAWS) generateSessionToken() (*sts.Credentials, error) {
 	stsClient, err := client.generateStsClient()
 	if err != nil {
 		return nil, err
@@ -59,13 +59,13 @@ func (client OpAWS) generateSessionToken() (*sts.Credentials, error) {
 	return output.Credentials, nil
 }
 
-func (client OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) {
+func (client *OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) {
 	stsClient, err := client.generateStsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	input := &sts.AssumeRoleInput{RoleArn: &client.assume_role}
+	input := &sts.AssumeRoleInput{RoleArn: &client.assume_role, RoleSessionName: &DEFAULT_SESSION_NAME}
 
 	if len(client.mfa) != 0 {
 		otp, err := client.opClient.GetOTP()
@@ -85,7 +85,7 @@ func (client OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) {
 	return output.Credentials, nil
 }
 
-func (client OpAWS) GetCredentials() (*sts.Credentials, error) {
+func (client *OpAWS) GetCredentials() (*sts.Credentials, error) {
 	if len(client.assume_role) == 0 {
 		return client.generateSessionToken()
 	}
@@ -93,14 +93,22 @@ func (client OpAWS) GetCredentials() (*sts.Credentials, error) {
 	return client.generateAssumedRoleCredentials()
 }
 
-func (client OpAWS) UseMFA(mfa string) {
+func (client *OpAWS) GetMFA() string {
+	return client.mfa
+}
+
+func (client *OpAWS) GetAssumeRole() string {
+	return client.assume_role
+}
+
+func (client *OpAWS) UseMFA(mfa string) {
 	client.mfa = mfa
 }
 
-func (client OpAWS) AssumeRole(mfa string) {
-	client.mfa = mfa
+func (client *OpAWS) AssumeRole(assume_role string) {
+	client.assume_role = assume_role
 }
 
-func New(cacheClient *cache.CacheClient, opClient *onepassword.OnePassword) *OpAWS {
-	return &OpAWS{cacheClient: cacheClient, opClient: opClient}
+func New(opClient *onepassword.OnePassword) *OpAWS {
+	return &OpAWS{opClient: opClient}
 }
