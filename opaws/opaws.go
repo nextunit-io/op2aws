@@ -85,6 +85,7 @@ func (client *OpAWS) generateAssumedRoleCredentials() (*sts.Credentials, error) 
 	return output.Credentials, nil
 }
 
+// TODO: Missing - static credentials
 func (client *OpAWS) GetCredentials() (*sts.Credentials, error) {
 	if len(client.assume_role) == 0 {
 		return client.generateSessionToken()
