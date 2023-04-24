@@ -51,9 +51,17 @@ jobs:
         if: matrix.targets.os == 'windows'
         shell: bash
         run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
-      - name: Create artifact dir and move file there
+      - name: Set env var for zip file
         shell: bash
-        run: ls -la && mkdir artifact && mv ${{ env.OUTPUT_NAME }} artifact/${{ env.EXECUTABLE }}
+        run: echo "ZIPFILE=${{ env.OUTPUT_NAME }}.zip >> $GITHUB_ENV
+      - name: Create artifactory ZIP
+        shell: bash
+        run: |
+          mv ${{ env.OUTPUT_NAME }} ${{ env.EXECUTABLE }}
+          zip ${{ env.ZIPFILE }} ${{ env.EXECUTABLE }}
+      - name: Move file to artifact directory
+          mkdir artifact
+          mv ${{ env.ZIPFILE }} artifact/
       - name: Save artifact
         uses: actions/upload-artifact@v2
         with:
