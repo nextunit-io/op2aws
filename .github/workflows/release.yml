@@ -53,7 +53,7 @@ jobs:
         run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
       - name: Set env var for zip file
         shell: bash
-        run: echo "ZIPFILE=${{ env.OUTPUT_NAME }}.zip >> $GITHUB_ENV
+        run: echo "ZIPFILE=${{ env.OUTPUT_NAME }}.zip" >> $GITHUB_ENV
       - name: Create artifactory ZIP
         shell: bash
         run: |
