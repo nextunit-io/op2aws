@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 )
 
-var FILEMODE = os.FileMode(int(0777))
+const FILEMODE = os.FileMode(int(0777))
 
 type AWSCredentialsCacheClient struct {
 	path        string

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var (
+const (
 	CLI_COMMAND                         = "op"
 	OP_GET_ITEM_PATH                    = "op://%s/%s/%s"
 	AWS_ACCESS_KEY_FIELD_DEFAULT        = "aws_access_key_id"
