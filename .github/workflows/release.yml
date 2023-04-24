@@ -40,7 +40,7 @@ jobs:
           cache-dependency-path: subdir/go.sum
       - name: Set env var for executable output name
         shell: bash
-        run: echo "OUTPUT_NAME=op2aws-${{ matrix.targets.os }}-${{ matrix.targets.arch }}" >> $GITHUB_ENV
+        run: echo "OUTPUT_NAME=op2aws" >> $GITHUB_ENV
       - name: Build for ${{ matrix.targets.os }} / ${{ matrix.targets.arch }}
         run: GOOS="${{ matrix.targets.os }}" GOARCH="${{ matrix.targets.arch }}" go build -o ${{ env.OUTPUT_NAME }}
       - name: Set env var for executable (not windows)
@@ -55,7 +55,7 @@ jobs:
           mv ${{ env.OUTPUT_NAME }} ${{ env.OUTPUT_NAME }}.exe
       - name: Set env var for zip file
         shell: bash
-        run: echo "ZIPFILE=${{ env.OUTPUT_NAME }}.zip" >> $GITHUB_ENV
+        run: echo "ZIPFILE=${{ env.OUTPUT_NAME }}-${{ matrix.targets.os }}-${{ matrix.targets.arch }}.zip" >> $GITHUB_ENV
       - name: Create artifactory ZIP
         shell: bash
         run: |
