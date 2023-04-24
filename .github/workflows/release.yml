@@ -47,17 +47,18 @@ jobs:
         if: matrix.targets.os != 'windows'
         shell: bash
         run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}" >> $GITHUB_ENV
-      - name: Set env var for executable (windows)
+      - name: Set env var for executable and rename file (windows)
         if: matrix.targets.os == 'windows'
         shell: bash
-        run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
+        run: |
+          echo "EXECUTABLE=${{ env.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
+          mv ${{ env.OUTPUT_NAME }} ${{ env.OUTPUT_NAME }}.exe
       - name: Set env var for zip file
         shell: bash
         run: echo "ZIPFILE=${{ env.OUTPUT_NAME }}.zip" >> $GITHUB_ENV
       - name: Create artifactory ZIP
         shell: bash
         run: |
-          mv ${{ env.OUTPUT_NAME }} ${{ env.EXECUTABLE }}
           zip ${{ env.ZIPFILE }} ${{ env.EXECUTABLE }}
       - name: Move file to artifact directory
         shell: bash
