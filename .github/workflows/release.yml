@@ -1,0 +1,102 @@
+name: build
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version of next deployment:'
+        required: true
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-release:
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targets:
+          - os: 'darwin'
+            arch: 'amd64'
+            cross: false
+          - os: 'linux'
+            arch: 'amd64'
+            cross: false
+          - os: 'windows'
+            arch: 'amd64'
+            cross: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '^1.20'
+          check-latest: true
+          cache-dependency-path: subdir/go.sum
+      - name: Set env var for executable output name
+        shell: bash
+        run: echo "OUTPUT_NAME=op2aws-${{ matrix.targets.os }}-${{ matrix.targets.arch }}" >> $GITHUB_ENV
+      - name: Build for ${{ matrix.targets.os }} / ${{ matrix.targets.arch }}
+        run: GOOS="${{ matrix.targets.os }}" GOARCH="${{ matrix.targets.arch }}" go build -o op2aws-${{ matrix.targets.os }}-${{ matrix.targets.arch }}
+      - name: Set env var for executable (not windows)
+        if: matrix.targets.os != 'windows'
+        shell: bash
+        run: echo "EXECUTABLE=${{ emv.OUTPUT_NAME }}" >> $GITHUB_ENV
+      - name: Set env var for executable (windows)
+        if: matrix.targets.os == 'windows'
+        shell: bash
+        run: echo "EXECUTABLE=${{ emv.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
+      - name: Create artifact dir and move file there
+        shell: bash
+        run: mkdir artifact && mv ${{ env.EXECUTABLE }} artifact/
+      - name: Save artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 2
+          name: artifact
+          path: artifact
+
+  upload-release:
+    name: upload-release
+    runs-on: ubuntu-latest
+    needs: [build-release]
+    steps:
+      - name: Generate the release version from tag
+        if: env.RELEASE_VERSION == ''
+        run: |
+          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            echo "RELEASE_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          fi
+      - name: Output release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+      - name: Get release artifacts from previous job
+        uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: artifact
+
+      - name: Print out all release files
+        run: |
+          echo "Generated $(ls ./artifact | wc -l) files:"
+          ls ./artifact
+      - name: Upload all saved release files
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          tag_name: ${{ env.RELEASE_VERSION }}
+          draft: true
+          fail_on_unmatched_files: true
+          name: ${{ env.RELEASE_VERSION }} Release
+          body: |
+            <!-- Write summary here -->
+          files: |
+            ./artifact/*
