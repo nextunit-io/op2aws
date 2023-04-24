@@ -10,6 +10,7 @@ jobs:
   # This workflow contains a single job called "build"
   build-release:
     name: build
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
