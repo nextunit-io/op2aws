@@ -42,15 +42,15 @@ jobs:
         shell: bash
         run: echo "OUTPUT_NAME=op2aws-${{ matrix.targets.os }}-${{ matrix.targets.arch }}" >> $GITHUB_ENV
       - name: Build for ${{ matrix.targets.os }} / ${{ matrix.targets.arch }}
-        run: GOOS="${{ matrix.targets.os }}" GOARCH="${{ matrix.targets.arch }}" go build -o op2aws-${{ matrix.targets.os }}-${{ matrix.targets.arch }}
+        run: GOOS="${{ matrix.targets.os }}" GOARCH="${{ matrix.targets.arch }}" go build -o ${{ env.OUTPUT_NAME }}
       - name: Set env var for executable (not windows)
         if: matrix.targets.os != 'windows'
         shell: bash
-        run: echo "EXECUTABLE=${{ emv.OUTPUT_NAME }}" >> $GITHUB_ENV
+        run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}" >> $GITHUB_ENV
       - name: Set env var for executable (windows)
         if: matrix.targets.os == 'windows'
         shell: bash
-        run: echo "EXECUTABLE=${{ emv.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
+        run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
       - name: Create artifact dir and move file there
         shell: bash
         run: mkdir artifact && mv ${{ env.EXECUTABLE }} artifact/
