@@ -60,6 +60,8 @@ jobs:
           mv ${{ env.OUTPUT_NAME }} ${{ env.EXECUTABLE }}
           zip ${{ env.ZIPFILE }} ${{ env.EXECUTABLE }}
       - name: Move file to artifact directory
+        shell: bash
+        run: |
           mkdir artifact
           mv ${{ env.ZIPFILE }} artifact/
       - name: Save artifact
