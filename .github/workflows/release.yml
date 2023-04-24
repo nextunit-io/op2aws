@@ -1,4 +1,4 @@
-name: build
+name: build-release
 
 on:
   push:
@@ -54,7 +54,7 @@ jobs:
         run: echo "EXECUTABLE=${{ env.OUTPUT_NAME }}.exe" >> $GITHUB_ENV
       - name: Create artifact dir and move file there
         shell: bash
-        run: ls -la && mkdir artifact && mv ${{ env.EXECUTABLE }} artifact/
+        run: ls -la && mkdir artifact && mv ${{ env.OUTPUT_NAME }} artifact/${{ env.EXECUTABLE }}
       - name: Save artifact
         uses: actions/upload-artifact@v2
         with:
