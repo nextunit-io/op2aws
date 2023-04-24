@@ -10,8 +10,6 @@ jobs:
   # This workflow contains a single job called "build"
   build-release:
     name: build
-    runs-on: ${{ matrix.targets.os }}
-    container: ${{ matrix.targets.container }}
     strategy:
       fail-fast: false
       matrix:
