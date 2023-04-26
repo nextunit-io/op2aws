@@ -1,9 +1,11 @@
 package awsvault
 
 import (
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 const (
@@ -14,6 +16,46 @@ const (
 	AWS_MFA_FIELD_DEFAULT               = "TODO"
 )
 
+type OpInterface interface {
+	GetName() string
+
+	OpVault | OpItem | OpEntry
+}
+
+type OpEntry struct {
+	Id      string `json:"id"`
+	Section struct {
+		Id string `json:"id"`
+	} `json:"section"`
+	Type      string `json:"type"`
+	Label     string `json:"label"`
+	Reference string `json:"reference"`
+}
+
+type OpVault struct {
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Version int    `json:"content_version,omitempty"`
+}
+
+type OpUrl struct {
+	Primary bool   `json:"primary"`
+	Href    string `json:"href"`
+}
+
+type OpItem struct {
+	Id                    string    `json:"id"`
+	Title                 string    `json:"title"`
+	Version               int       `json:"version,omitempty"`
+	Vault                 OpVault   `json:"vault"`
+	Category              string    `json:"category"`
+	LastEditedBy          string    `json:"last_edited_by"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
+	AdditionalInformation string    `json:"additional_information"`
+	Urls                  []OpUrl   `json:"urls"`
+}
+
 type OnePassword struct {
 	vault string
 	item  string
@@ -23,6 +65,18 @@ type OnePassword struct {
 	mfaField             string
 
 	Vault
+}
+
+func (e OpEntry) GetName() string {
+	return e.Label
+}
+
+func (v OpVault) GetName() string {
+	return v.Name
+}
+
+func (i OpItem) GetName() string {
+	return i.Title
 }
 
 func getOutput(cmd *exec.Cmd) (string, error) {
@@ -38,6 +92,56 @@ func getOutput(cmd *exec.Cmd) (string, error) {
 func (client *OnePassword) getItem(path string) (string, error) {
 	cmd := exec.Command(CLI_COMMAND, "read", path)
 	return getOutput(cmd)
+}
+
+func GetVaults() ([]OpVault, error) {
+	cmd := exec.Command(CLI_COMMAND, "vault", "list", "--format", "json")
+	output, err := getOutput(cmd)
+	if err != nil {
+		return nil, err
+	}
+	var vault []OpVault
+
+	err = json.Unmarshal([]byte(output), &vault)
+	if err != nil {
+		return nil, err
+	}
+
+	return vault, nil
+}
+
+func GetEntries(vault, item string) ([]OpEntry, error) {
+	cmd := exec.Command(CLI_COMMAND, "item", "get", item, "--vault", vault, "--format", "json")
+	output, err := getOutput(cmd)
+	if err != nil {
+		return nil, err
+	}
+	var items struct {
+		Fields []OpEntry `json:"fields"`
+	}
+
+	err = json.Unmarshal([]byte(output), &items)
+	if err != nil {
+		return nil, err
+	}
+
+	return items.Fields, nil
+}
+
+func GetItems(vault string) ([]OpItem, error) {
+	cmd := exec.Command(CLI_COMMAND, "item", "list", "--vault", vault, "--format", "json")
+	output, err := getOutput(cmd)
+	if err != nil {
+		return nil, err
+	}
+	var items []OpItem
+
+	err = json.Unmarshal([]byte(output), &items)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }
 
 func (client *OnePassword) GetAccessKeyId() (string, error) {
