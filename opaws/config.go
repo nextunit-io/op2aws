@@ -46,8 +46,6 @@ func GetProfileBody(profileName, vault, item, assumeRole, mfa, labelAccessKey, l
 		additionalOptions = " " + additionalOptions
 	}
 
-	fmt.Println(additionalOptions)
-
 	return fmt.Sprintf(
 		PROFILE_TEMPLATE,
 		profileName,
