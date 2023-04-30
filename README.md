@@ -67,3 +67,37 @@ Added to config file.
 If you store your credentials in other fields then `aws_access_key_id` or `aws_secret_access_key`, because e.g. you have multiple credentials in one 1password-item, you can select the
 correct fields as well, by answering the question with `yes`.
 
+### Using `op2aws cli`
+
+`op2aws cli` is using caching, we don't want to generate everytime completely new credentials. If the old credentials are not expired, it is using this credentials.
+The cache is stored at `$HOME/.aws/op2aws-cache`. To force recreation of the credentials, it is possible to use the `--force` (short `-f`) flag.
+
+#### Using op2aws in the .aws/config file
+
+AWS is providing [functioanlity](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sourcing-external.html), called `credential_process` for the `.aws/config` File.
+This allowes to use an external tool to provide the credentials for the login. In our case, we want to use `op2aws`. 
+
+```bash
+[profile <profile-name>]
+    credential_process = sh -c '"op2aws" "cli" "<VAULT>" "<ITEM>" "-m" "<MFA ARN>" "-a" "<ASSUME ROLE>"'
+```
+
+To get the full list of parameters, use `op2aws cli --help`
+
+#### Using op2aws directly in the cli without file support
+
+It is possible to get the credentials directly as output from `op2aws`. Therefore the flag `--export `(short `-e`) is provided. 
+
+```bash
+$ op2aws cli nextunit.io "AWS nextunit - Zero" -a arn:aws:iam::0000000000000:role/Administrator -m arn:aws:iam::00000000000:mfa/zero --export
+
+AWS_ACCESS_KEY_ID=*********
+AWS_SECRET_ACCESS_KEY=************
+AWS_SESSION_TOKEN=********************************************************************************************************************
+```
+
+So it is possible to directly export the variables with this command:
+
+```bash
+export $(op2aws cli nextunit.io "AWS nextunit - Zero" -a arn:aws:iam::0000000000000:role/Administrator -m arn:aws:iam::00000000000:mfa/zero --export)
+```

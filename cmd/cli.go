@@ -47,9 +47,9 @@ func runAwsCliCommand(vault, item, mfaArn, assumeRoleArn string, forceCache bool
 	}
 
 	if export {
-		fmt.Println("export AWS_ACCESS_KEY_ID=" + *credentials.AccessKeyId)
-		fmt.Println("export AWS_SECRET_ACCESS_KEY=" + *credentials.SecretAccessKey)
-		fmt.Println("export AWS_SESSION_TOKEN=" + *credentials.SessionToken)
+		fmt.Println("AWS_ACCESS_KEY_ID=" + *credentials.AccessKeyId)
+		fmt.Println("AWS_SECRET_ACCESS_KEY=" + *credentials.SecretAccessKey)
+		fmt.Println("AWS_SESSION_TOKEN=" + *credentials.SessionToken)
 	} else {
 		credentialsByteString, err := json.Marshal(credentials)
 		handleError(err)
@@ -86,7 +86,7 @@ func addAwsCliCmd() {
 	cmd.Flags().StringVarP(&mfaArn, "mfa", "m", "", "When using 1password MFA it is possible to use this flag to specify the MFA arn")
 	cmd.Flags().StringVarP(&assumeRoleArn, "assume-role", "a", "", "To assume a specific role when getting the credentials, it is possible to use this flat for adding the arn of the role")
 	cmd.Flags().BoolVarP(&forceCache, "force", "f", false, "To force the execution without using the cache")
-	cmd.Flags().BoolVarP(&export, "export", "e", false, "To get the export command. It can be used to run it via `source $(op2aws cli ... --export)`")
+	cmd.Flags().BoolVarP(&export, "export", "e", false, "To get the export command. It can be used to run it via `export $(op2aws cli ... --export)`")
 	cmd.Flags().StringVarP(&awsAccessKeyFieldDefault, "label-accesskey", "k", awsvault.AWS_ACCESS_KEY_FIELD_DEFAULT, "To override the label field name in 1password for the AWS_ACCESS_KEY_ID")
 	cmd.Flags().StringVarP(&awsSecretAccessKeyFieldDefault, "label-secret-accesskey", "s", awsvault.AWS_SECRET_ACCESS_KEY_FIELD_DEFAULT, "To override the label field name in 1password for the AWS_SECRET_ACCESS_KEY")
 	rootCMD.AddCommand(cmd)
