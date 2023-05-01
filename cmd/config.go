@@ -26,6 +26,9 @@ func runAwsConfigCommand(configPath string) {
 	if !term.IsTerminal(int(syscall.Stdin)) {
 		handleError(fmt.Errorf("This functionality is not available inside of a non interactive terminal"))
 	}
+
+	commandClient := &awsvault.CommandClientDefault{}
+
 	var profileName string
 	var vaultName string
 	var itemName string
@@ -34,7 +37,7 @@ func runAwsConfigCommand(configPath string) {
 	var assumeRole string
 	var mfa string
 
-	vaultList, err := awsvault.GetVaults()
+	vaultList, err := awsvault.GetVaults(commandClient)
 	handleError(err)
 
 	survey.AskOne(&survey.Input{
@@ -46,7 +49,7 @@ func runAwsConfigCommand(configPath string) {
 		Options: getNameList(vaultList),
 	}, &vaultName, survey.WithValidator(survey.Required))
 
-	itemList, err := awsvault.GetItems(vaultName)
+	itemList, err := awsvault.GetItems(commandClient, vaultName)
 	handleError(err)
 
 	survey.AskOne(&survey.Select{
@@ -82,7 +85,7 @@ func runAwsConfigCommand(configPath string) {
 	}, &changeDefaultLabelNames)
 
 	if changeDefaultLabelNames {
-		entries, err := awsvault.GetEntries(vaultName, itemName)
+		entries, err := awsvault.GetEntries(commandClient, vaultName, itemName)
 		handleError(err)
 
 		survey.AskOne(&survey.Select{

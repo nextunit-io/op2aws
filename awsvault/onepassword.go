@@ -3,7 +3,6 @@ package awsvault
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -57,6 +56,8 @@ type OpItem struct {
 }
 
 type OnePassword struct {
+	commandLineClient CommandInterface
+
 	vault string
 	item  string
 
@@ -79,7 +80,7 @@ func (i OpItem) GetName() string {
 	return i.Title
 }
 
-func getOutput(cmd *exec.Cmd) (string, error) {
+func getOutput(cmd CmdInterface) (string, error) {
 	stdout, err := cmd.Output()
 
 	if err != nil {
@@ -90,12 +91,12 @@ func getOutput(cmd *exec.Cmd) (string, error) {
 }
 
 func (client *OnePassword) getItem(path string) (string, error) {
-	cmd := exec.Command(CLI_COMMAND, "read", path)
+	cmd := client.commandLineClient.Command(CLI_COMMAND, "read", path)
 	return getOutput(cmd)
 }
 
-func GetVaults() ([]OpVault, error) {
-	cmd := exec.Command(CLI_COMMAND, "vault", "list", "--format", "json")
+func GetVaults(commandLineClient CommandInterface) ([]OpVault, error) {
+	cmd := commandLineClient.Command(CLI_COMMAND, "vault", "list", "--format", "json")
 	output, err := getOutput(cmd)
 	if err != nil {
 		return nil, err
@@ -110,8 +111,8 @@ func GetVaults() ([]OpVault, error) {
 	return vault, nil
 }
 
-func GetEntries(vault, item string) ([]OpEntry, error) {
-	cmd := exec.Command(CLI_COMMAND, "item", "get", item, "--vault", vault, "--format", "json")
+func GetEntries(commandLineClient CommandInterface, vault, item string) ([]OpEntry, error) {
+	cmd := commandLineClient.Command(CLI_COMMAND, "item", "get", item, "--vault", vault, "--format", "json")
 	output, err := getOutput(cmd)
 	if err != nil {
 		return nil, err
@@ -128,8 +129,8 @@ func GetEntries(vault, item string) ([]OpEntry, error) {
 	return items.Fields, nil
 }
 
-func GetItems(vault string) ([]OpItem, error) {
-	cmd := exec.Command(CLI_COMMAND, "item", "list", "--vault", vault, "--format", "json")
+func GetItems(commandLineClient CommandInterface, vault string) ([]OpItem, error) {
+	cmd := commandLineClient.Command(CLI_COMMAND, "item", "list", "--vault", vault, "--format", "json")
 	output, err := getOutput(cmd)
 	if err != nil {
 		return nil, err
@@ -144,22 +145,22 @@ func GetItems(vault string) ([]OpItem, error) {
 	return items, nil
 }
 
-func (client *OnePassword) GetAccessKeyId() (string, error) {
+func (client OnePassword) GetAccessKeyId() (string, error) {
 	return client.getItem(fmt.Sprintf(OP_GET_ITEM_PATH, client.vault, client.item, client.accessKeyField))
 }
 
-func (client *OnePassword) GetSecretAccessKey() (string, error) {
+func (client OnePassword) GetSecretAccessKey() (string, error) {
 	return client.getItem(fmt.Sprintf(OP_GET_ITEM_PATH, client.vault, client.item, client.secretAccessKeyField))
 }
 
-func (client *OnePassword) GetOTP() (string, error) {
+func (client OnePassword) GetOTP() (string, error) {
 	// TODO: check if there is an option to retrieve a otp inside of a specific label when it comes to multiple otp inside of one item
-	cmd := exec.Command(CLI_COMMAND, "item", "get", client.item, "--vault", client.vault, "--otp")
+	cmd := client.commandLineClient.Command(CLI_COMMAND, "item", "get", client.item, "--vault", client.vault, "--otp")
 	return getOutput(cmd)
 }
 
-func (client *OnePassword) VaultAvailable() bool {
-	cmd := exec.Command(CLI_COMMAND)
+func (client OnePassword) VaultAvailable() bool {
+	cmd := client.commandLineClient.Command(CLI_COMMAND)
 	_, err := cmd.Output()
 
 	if err != nil {
@@ -183,8 +184,9 @@ func (client *OnePassword) SetDefaults(accessKeyField, secretAccessKeyField, mfa
 	client.mfaField = mfaField
 }
 
-func NewOnePasswordVault(vault, item string) *OnePassword {
+func NewOnePasswordVault(commandLineClient CommandInterface, vault, item string) *OnePassword {
 	return &OnePassword{
+		commandLineClient:    commandLineClient,
 		vault:                vault,
 		item:                 item,
 		accessKeyField:       AWS_ACCESS_KEY_FIELD_DEFAULT,

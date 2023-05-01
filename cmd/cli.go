@@ -14,7 +14,7 @@ import (
 )
 
 func runAwsCliCommand(vault, item, mfaArn, assumeRoleArn string, forceCache bool, export bool, awsAccessKeyFieldDefault, awsSecretAccessKeyFieldDefault string) {
-	opClient := awsvault.NewOnePasswordVault(vault, item)
+	opClient := awsvault.NewOnePasswordVault(&awsvault.CommandClientDefault{}, vault, item)
 	opClient.SetDefaults(awsAccessKeyFieldDefault, awsSecretAccessKeyFieldDefault, "TODO")
 
 	awsClient := opaws.New(opClient, &opaws.OpAwsDefaultInput{})
