@@ -5,19 +5,21 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 )
 
 var DEFAULT_SESSION_NAME = "op2aws-session"
 
 type OpAWS struct {
-	opClient    awsvault.Vault
+	opClient  awsvault.Vault
+	awsClient OpAWSInput
+
 	mfa         string
 	assume_role string
 }
 
-func (client OpAWS) generateStsClient() (*sts.STS, error) {
+func (client OpAWS) generateStsClient() (stsiface.STSAPI, error) {
 	accessKeyId, err := client.opClient.GetAccessKeyId()
 	if err != nil {
 		return nil, err
@@ -28,7 +30,7 @@ func (client OpAWS) generateStsClient() (*sts.STS, error) {
 		return nil, err
 	}
 
-	return sts.New(session.New(&aws.Config{
+	return client.awsClient.NewSts(client.awsClient.NewSession(&aws.Config{
 		Credentials: credentials.NewStaticCredentials(accessKeyId, secretAccessKey, ""),
 	})), nil
 }
@@ -110,6 +112,6 @@ func (client *OpAWS) AssumeRole(assume_role string) {
 	client.assume_role = assume_role
 }
 
-func New(opClient awsvault.Vault) *OpAWS {
-	return &OpAWS{opClient: opClient}
+func New(opClient awsvault.Vault, awsClient OpAWSInput) *OpAWS {
+	return &OpAWS{opClient: opClient, awsClient: awsClient}
 }
