@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -126,9 +127,8 @@ func TestUsingAssumeRoleWithoutErrors(t *testing.T) {
 
 	client.AssumeRole("test-assume-role")
 	_, err := client.GetCredentials()
-	if err != nil {
-		t.Errorf("Error occured at GetCredentials: %+v", err)
-	}
+
+	assert.Nil(t, err, "Error occured at AssumeRole")
 }
 
 func TestUsingAssumeRoleAndCallingTheAwsApi(t *testing.T) {
@@ -140,13 +140,12 @@ func TestUsingAssumeRoleAndCallingTheAwsApi(t *testing.T) {
 	client.AssumeRole("test-assume-role")
 	client.GetCredentials()
 
-	if assumeRoleCallCount != 1 {
-		t.Errorf("AssumeRole was not executed - Expected: %d - Actual %d", 1, assumeRoleCallCount)
-	}
+	assert.Equal(t, 1, assumeRoleCallCount, "AssumeRole should called one time")
 }
 
 func TestUsingAssumeRoleWithCorrectAssumeRoleInput(t *testing.T) {
 	setupTestCase()
+	assert := assert.New(t)
 	t.Helper()
 
 	client := New(&awsVaultTest{}, &opAwsInputTest{})
@@ -154,21 +153,15 @@ func TestUsingAssumeRoleWithCorrectAssumeRoleInput(t *testing.T) {
 	client.AssumeRole("test-assume-role")
 	client.GetCredentials()
 
-	if *assumeRoleInput.RoleArn != "test-assume-role" {
-		t.Errorf("Input for RoleArn is not valid - Expected %s - Actual %s", "test-assume-role", *assumeRoleInput.RoleArn)
-	}
-
-	if *assumeRoleInput.RoleSessionName != DEFAULT_SESSION_NAME {
-		t.Errorf("Input for RoleSessionName is not valid - Expected %s - Actual %s", DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
-	}
-
-	if assumeRoleInput.SerialNumber != nil {
-		t.Errorf("SerialNumber should be 'nil' - Acutal: %s", *assumeRoleInput.SerialNumber)
-	}
+	assert.Equalf("test-assume-role", *assumeRoleInput.RoleArn, "Input for RoleArn is not valid - Expected %s - Actual %s", "test-assume-role", *assumeRoleInput.RoleArn)
+	assert.Equalf(DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName, "Input for RoleArn is not valid - Expected %s - Actual %s", DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
+	assert.Nilf(assumeRoleInput.SerialNumber, "SerialNumber should be 'nil' - Acutal: %s", assumeRoleInput.SerialNumber)
 }
 
 func TestUsingAssumeRoleAndMfaWithCorrectAssumeRoleInput(t *testing.T) {
 	setupTestCase()
+	assert := assert.New(t)
+
 	t.Helper()
 
 	client := New(&awsVaultTest{}, &opAwsInputTest{})
@@ -177,25 +170,12 @@ func TestUsingAssumeRoleAndMfaWithCorrectAssumeRoleInput(t *testing.T) {
 	client.UseMFA("test-mfa")
 	client.GetCredentials()
 
-	if *assumeRoleInput.RoleArn != "test-assume-role" {
-		t.Errorf("Input for RoleArn is not valid - Expected %s - Actual %s", "test-assume-role", *assumeRoleInput.RoleArn)
-	}
+	assert.Equalf("test-assume-role", *assumeRoleInput.RoleArn, "Input for RoleArn is not valid - Expected %s - Actual %s", "test-assume-role", *assumeRoleInput.RoleArn)
+	assert.Equalf(DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName, "Input for RoleArn is not valid - Expected %s - Actual %s", DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
 
-	if *assumeRoleInput.RoleSessionName != DEFAULT_SESSION_NAME {
-		t.Errorf("Input for RoleSessionName is not valid - Expected %s - Actual %s", DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
-	}
-
-	if getOtpCallCount != 1 {
-		t.Errorf("GetOTP function was not called but was expected to")
-	}
-
-	if *assumeRoleInput.SerialNumber != "test-mfa" {
-		t.Errorf("Input for SerialNumber is not valid - Expected %s - Actual %s", "test-mfa", *assumeRoleInput.SerialNumber)
-	}
-
-	if *assumeRoleInput.TokenCode != "otp-default" {
-		t.Errorf("Input for SerialNumber is not valid - Expected %s - Actual %s", "otp-default", *assumeRoleInput.TokenCode)
-	}
+	assert.Equalf(1, getOtpCallCount, "GetOTP function should be exactly one time called. Called: %d", getOtpCallCount)
+	assert.Equalf("test-mfa", *assumeRoleInput.SerialNumber, "Input for SerialNumber is not valid - Expected %s - Actual %s", "test-mfa", *assumeRoleInput.SerialNumber)
+	assert.Equalf("otp-default", *assumeRoleInput.TokenCode, "Input for TokenCode is not valid - Expected %s - Actual %s", "otp-default", *assumeRoleInput.TokenCode)
 }
 
 func TestUsingAssumeRoleAndMfaWithAssumeRoleError(t *testing.T) {
@@ -209,12 +189,8 @@ func TestUsingAssumeRoleAndMfaWithAssumeRoleError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if assumeRoleCallCount != 1 {
-		t.Errorf("AssumeRole was not executed - Expected: %d - Actual %d", 1, assumeRoleCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when AssumeRole is returning an error")
-	}
+	assert.Equal(t, 1, assumeRoleCallCount, "AssumeRole should called one time")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingAssumeRoleAndMfaWithOtpError(t *testing.T) {
@@ -228,12 +204,9 @@ func TestUsingAssumeRoleAndMfaWithOtpError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if assumeRoleCallCount != 0 {
-		t.Errorf("AssumeRole was executed - Expected: %d - Actual %d", 0, assumeRoleCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetOtp is returning an error")
-	}
+	assert.Equal(t, 0, assumeRoleCallCount, "AssumeRole should not be called")
+	assert.Equal(t, 1, getOtpCallCount, "GetOtp should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingAssumeRoleAndMfaWithSecretAccessKeyError(t *testing.T) {
@@ -247,15 +220,11 @@ func TestUsingAssumeRoleAndMfaWithSecretAccessKeyError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if assumeRoleCallCount != 0 {
-		t.Errorf("AssumeRole was executed - Expected: %d - Actual %d", 0, assumeRoleCallCount)
-	}
-	if getOtpCallCount != 0 {
-		t.Errorf("GetOtp was executed - Expected: %d - Actual %d", 0, getOtpCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetSecretAccessKey is returning an error")
-	}
+	assert.Equal(t, 0, assumeRoleCallCount, "AssumeRole should not be called")
+	assert.Equal(t, 0, getOtpCallCount, "GetOtp should not be called")
+	assert.Equal(t, 1, getSecretAccessKeyCallCount, "GetSecretAccessKey should be called")
+	assert.Equal(t, 1, getAccessKeyIdCallCount, "GetAccessKeyId should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingAssumeRoleAndMfaWithAccessKeyIdError(t *testing.T) {
@@ -269,18 +238,11 @@ func TestUsingAssumeRoleAndMfaWithAccessKeyIdError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if assumeRoleCallCount != 0 {
-		t.Errorf("AssumeRole was executed - Expected: %d - Actual %d", 0, assumeRoleCallCount)
-	}
-	if getOtpCallCount != 0 {
-		t.Errorf("GetOtp was executed - Expected: %d - Actual %d", 0, getOtpCallCount)
-	}
-	if getSecretAccessKeyCallCount != 0 {
-		t.Errorf("GetSecretAccessKey was executed - Expected: %d - Actual %d", 0, getSecretAccessKeyCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetAccessKeyId is returning an error")
-	}
+	assert.Equal(t, 0, assumeRoleCallCount, "AssumeRole should not be called")
+	assert.Equal(t, 0, getOtpCallCount, "GetOtp should not be called")
+	assert.Equal(t, 0, getSecretAccessKeyCallCount, "GetSecretAccessKey should not be called")
+	assert.Equal(t, 1, getAccessKeyIdCallCount, "GetAccessKeyId should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingGenerateSessionTokenWithoutErrors(t *testing.T) {
@@ -290,9 +252,7 @@ func TestUsingGenerateSessionTokenWithoutErrors(t *testing.T) {
 	client := New(&awsVaultTest{}, &opAwsInputTest{})
 
 	_, err := client.GetCredentials()
-	if err != nil {
-		t.Errorf("Error occured at GetCredentials: %+v", err)
-	}
+	assert.Nil(t, err, "Error occured at GenerateSessionToken")
 }
 
 func TestUsingGenerateSessionTokenAndCallingTheAwsApi(t *testing.T) {
@@ -302,10 +262,7 @@ func TestUsingGenerateSessionTokenAndCallingTheAwsApi(t *testing.T) {
 	client := New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.GetCredentials()
-
-	if getSessionTokenCallCount != 1 {
-		t.Errorf("AssumeRole was not executed - Expected: %d - Actual %d", 1, getSessionTokenCallCount)
-	}
+	assert.Equal(t, 1, getSessionTokenCallCount, "GetSessionToken should be called")
 }
 
 func TestUsingGenerateSessionTokenWithCorrectAssumeRoleInput(t *testing.T) {
@@ -315,14 +272,12 @@ func TestUsingGenerateSessionTokenWithCorrectAssumeRoleInput(t *testing.T) {
 	client := New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.GetCredentials()
-
-	if getSessionTokenInput.SerialNumber != nil {
-		t.Errorf("SerialNumber should be 'nil' - Acutal: %s", *getSessionTokenInput.SerialNumber)
-	}
+	assert.Nil(t, getSessionTokenInput.SerialNumber, "SerialNumber should not be set")
 }
 
 func TestUsingGenerateSessionTokenAndMfaWithCorrectAssumeRoleInput(t *testing.T) {
 	setupTestCase()
+	assert := assert.New(t)
 	t.Helper()
 
 	client := New(&awsVaultTest{}, &opAwsInputTest{})
@@ -330,20 +285,12 @@ func TestUsingGenerateSessionTokenAndMfaWithCorrectAssumeRoleInput(t *testing.T)
 	client.UseMFA("test-mfa")
 	client.GetCredentials()
 
-	if getOtpCallCount != 1 {
-		t.Errorf("GetOTP function was not called but was expected to")
-	}
-
-	if *getSessionTokenInput.SerialNumber != "test-mfa" {
-		t.Errorf("Input for SerialNumber is not valid - Expected %s - Actual %s", "test-mfa", *getSessionTokenInput.SerialNumber)
-	}
-
-	if *getSessionTokenInput.TokenCode != "otp-default" {
-		t.Errorf("Input for SerialNumber is not valid - Expected %s - Actual %s", "otp-default", *getSessionTokenInput.TokenCode)
-	}
+	assert.Equalf(1, getOtpCallCount, "GetOTP function should be exactly one time called. Called: %d", getOtpCallCount)
+	assert.Equalf("test-mfa", *getSessionTokenInput.SerialNumber, "Input for SerialNumber is not valid - Expected %s - Actual %s", "test-mfa", *getSessionTokenInput.SerialNumber)
+	assert.Equalf("otp-default", *getSessionTokenInput.TokenCode, "Input for TokenCode is not valid - Expected %s - Actual %s", "otp-default", *getSessionTokenInput.TokenCode)
 }
 
-func TestUsingGenerateSessionTokenAndMfaWithAssumeRoleError(t *testing.T) {
+func TestUsingGenerateSessionTokenAndMfaWithGetSessionTokenError(t *testing.T) {
 	setupTestCase()
 	t.Helper()
 
@@ -353,12 +300,11 @@ func TestUsingGenerateSessionTokenAndMfaWithAssumeRoleError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if getSessionTokenCallCount != 1 {
-		t.Errorf("GetSessionToken was not executed - Expected: %d - Actual %d", 1, getSessionTokenCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetSessionToken is returning an error")
-	}
+	assert.Equal(t, 1, getSessionTokenCallCount, "GetSessionToken should be called")
+	assert.Equal(t, 1, getOtpCallCount, "GetOtp should be called")
+	assert.Equal(t, 1, getSecretAccessKeyCallCount, "GetSecretAccessKey should be called")
+	assert.Equal(t, 1, getAccessKeyIdCallCount, "GetAccessKeyId should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingGenerateSessionTokenAndMfaWithOtpError(t *testing.T) {
@@ -371,12 +317,11 @@ func TestUsingGenerateSessionTokenAndMfaWithOtpError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if getSessionTokenCallCount != 0 {
-		t.Errorf("GetSessionToken was executed - Expected: %d - Actual %d", 0, getSessionTokenCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetOtp is returning an error")
-	}
+	assert.Equal(t, 0, getSessionTokenCallCount, "GetSessionToken should not be called")
+	assert.Equal(t, 1, getOtpCallCount, "GetOtp should be called")
+	assert.Equal(t, 1, getSecretAccessKeyCallCount, "GetSecretAccessKey should be called")
+	assert.Equal(t, 1, getAccessKeyIdCallCount, "GetAccessKeyId should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingGenerateSessionTokenAndMfaWithSecretAccessKeyError(t *testing.T) {
@@ -389,15 +334,11 @@ func TestUsingGenerateSessionTokenAndMfaWithSecretAccessKeyError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if getSessionTokenCallCount != 0 {
-		t.Errorf("GetSessionToken was executed - Expected: %d - Actual %d", 0, getSessionTokenCallCount)
-	}
-	if getOtpCallCount != 0 {
-		t.Errorf("GetOtp was executed - Expected: %d - Actual %d", 0, getOtpCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetSecretAccessKey is returning an error")
-	}
+	assert.Equal(t, 0, getSessionTokenCallCount, "GetSessionToken should not be called")
+	assert.Equal(t, 0, getOtpCallCount, "GetOtp should not be called")
+	assert.Equal(t, 1, getSecretAccessKeyCallCount, "GetSecretAccessKey should be called")
+	assert.Equal(t, 1, getAccessKeyIdCallCount, "GetAccessKeyId should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
 
 func TestUsingGenerateSessionTokenAndMfaWithAccessKeyIdError(t *testing.T) {
@@ -411,16 +352,9 @@ func TestUsingGenerateSessionTokenAndMfaWithAccessKeyIdError(t *testing.T) {
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
 
-	if getSessionTokenCallCount != 0 {
-		t.Errorf("GetSessionToken was executed - Expected: %d - Actual %d", 0, getSessionTokenCallCount)
-	}
-	if getOtpCallCount != 0 {
-		t.Errorf("GetOtp was executed - Expected: %d - Actual %d", 0, getOtpCallCount)
-	}
-	if getSecretAccessKeyCallCount != 0 {
-		t.Errorf("GetSecretAccessKey was executed - Expected: %d - Actual %d", 0, getSecretAccessKeyCallCount)
-	}
-	if err == nil {
-		t.Errorf("Expacting an error, when GetAccessKeyId is returning an error")
-	}
+	assert.Equal(t, 0, getSessionTokenCallCount, "GetSessionToken should not be called")
+	assert.Equal(t, 0, getOtpCallCount, "GetOtp should not be called")
+	assert.Equal(t, 0, getSecretAccessKeyCallCount, "GetSecretAccessKey should not be called")
+	assert.Equal(t, 1, getAccessKeyIdCallCount, "GetAccessKeyId should be called")
+	assert.ErrorContains(t, err, "Test error")
 }
