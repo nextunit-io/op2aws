@@ -1,8 +1,9 @@
-package opaws
+package opaws_test
 
 import (
 	"fmt"
 	"nextunit/op2aws/awsvault"
+	"nextunit/op2aws/opaws"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,7 +36,7 @@ type awsVaultTest struct {
 }
 
 type opAwsInputTest struct {
-	OpAWSInput
+	opaws.OpAWSInput
 }
 
 type stsApiTest struct {
@@ -123,7 +124,7 @@ func TestUsingAssumeRoleWithoutErrors(t *testing.T) {
 	setupTestCase()
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	_, err := client.GetCredentials()
@@ -135,7 +136,7 @@ func TestUsingAssumeRoleAndCallingTheAwsApi(t *testing.T) {
 	setupTestCase()
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.GetCredentials()
@@ -148,13 +149,13 @@ func TestUsingAssumeRoleWithCorrectAssumeRoleInput(t *testing.T) {
 	assert := assert.New(t)
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.GetCredentials()
 
 	assert.Equalf("test-assume-role", *assumeRoleInput.RoleArn, "Input for RoleArn is not valid - Expected %s - Actual %s", "test-assume-role", *assumeRoleInput.RoleArn)
-	assert.Equalf(DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName, "Input for RoleArn is not valid - Expected %s - Actual %s", DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
+	assert.Equalf(opaws.DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName, "Input for RoleArn is not valid - Expected %s - Actual %s", opaws.DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
 	assert.Nilf(assumeRoleInput.SerialNumber, "SerialNumber should be 'nil' - Acutal: %s", assumeRoleInput.SerialNumber)
 }
 
@@ -164,14 +165,14 @@ func TestUsingAssumeRoleAndMfaWithCorrectAssumeRoleInput(t *testing.T) {
 
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.UseMFA("test-mfa")
 	client.GetCredentials()
 
 	assert.Equalf("test-assume-role", *assumeRoleInput.RoleArn, "Input for RoleArn is not valid - Expected %s - Actual %s", "test-assume-role", *assumeRoleInput.RoleArn)
-	assert.Equalf(DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName, "Input for RoleArn is not valid - Expected %s - Actual %s", DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
+	assert.Equalf(opaws.DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName, "Input for RoleArn is not valid - Expected %s - Actual %s", opaws.DEFAULT_SESSION_NAME, *assumeRoleInput.RoleSessionName)
 
 	assert.Equalf(1, getOtpCallCount, "GetOTP function should be exactly one time called. Called: %d", getOtpCallCount)
 	assert.Equalf("test-mfa", *assumeRoleInput.SerialNumber, "Input for SerialNumber is not valid - Expected %s - Actual %s", "test-mfa", *assumeRoleInput.SerialNumber)
@@ -183,7 +184,7 @@ func TestUsingAssumeRoleAndMfaWithAssumeRoleError(t *testing.T) {
 	t.Helper()
 
 	assumeRoleReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.UseMFA("test-mfa")
@@ -198,7 +199,7 @@ func TestUsingAssumeRoleAndMfaWithOtpError(t *testing.T) {
 	t.Helper()
 
 	getOtpReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.UseMFA("test-mfa")
@@ -214,7 +215,7 @@ func TestUsingAssumeRoleAndMfaWithSecretAccessKeyError(t *testing.T) {
 	t.Helper()
 
 	getSecretAccessKeyReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.UseMFA("test-mfa")
@@ -232,7 +233,7 @@ func TestUsingAssumeRoleAndMfaWithAccessKeyIdError(t *testing.T) {
 	t.Helper()
 
 	getAccessKeyIdReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.UseMFA("test-mfa")
@@ -249,7 +250,7 @@ func TestUsingGenerateSessionTokenWithoutErrors(t *testing.T) {
 	setupTestCase()
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	_, err := client.GetCredentials()
 	assert.Nil(t, err, "Error occured at GenerateSessionToken")
@@ -259,7 +260,7 @@ func TestUsingGenerateSessionTokenAndCallingTheAwsApi(t *testing.T) {
 	setupTestCase()
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.GetCredentials()
 	assert.Equal(t, 1, getSessionTokenCallCount, "GetSessionToken should be called")
@@ -269,7 +270,7 @@ func TestUsingGenerateSessionTokenWithCorrectAssumeRoleInput(t *testing.T) {
 	setupTestCase()
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.GetCredentials()
 	assert.Nil(t, getSessionTokenInput.SerialNumber, "SerialNumber should not be set")
@@ -280,7 +281,7 @@ func TestUsingGenerateSessionTokenAndMfaWithCorrectAssumeRoleInput(t *testing.T)
 	assert := assert.New(t)
 	t.Helper()
 
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.UseMFA("test-mfa")
 	client.GetCredentials()
@@ -295,7 +296,7 @@ func TestUsingGenerateSessionTokenAndMfaWithGetSessionTokenError(t *testing.T) {
 	t.Helper()
 
 	getSessionTokenReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
@@ -312,7 +313,7 @@ func TestUsingGenerateSessionTokenAndMfaWithOtpError(t *testing.T) {
 	t.Helper()
 
 	getOtpReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
@@ -329,7 +330,7 @@ func TestUsingGenerateSessionTokenAndMfaWithSecretAccessKeyError(t *testing.T) {
 	t.Helper()
 
 	getSecretAccessKeyReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.UseMFA("test-mfa")
 	_, err := client.GetCredentials()
@@ -346,7 +347,7 @@ func TestUsingGenerateSessionTokenAndMfaWithAccessKeyIdError(t *testing.T) {
 	t.Helper()
 
 	getAccessKeyIdReturnValue = nil
-	client := New(&awsVaultTest{}, &opAwsInputTest{})
+	client := opaws.New(&awsVaultTest{}, &opAwsInputTest{})
 
 	client.AssumeRole("test-assume-role")
 	client.UseMFA("test-mfa")

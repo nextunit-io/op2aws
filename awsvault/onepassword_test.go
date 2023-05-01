@@ -1,8 +1,9 @@
-package awsvault
+package awsvault_test
 
 import (
 	"encoding/json"
 	"fmt"
+	"nextunit/op2aws/awsvault"
 	"reflect"
 	"testing"
 
@@ -34,11 +35,11 @@ var (
 )
 
 type commandLineClientTest struct {
-	CommandInterface
+	awsvault.CommandInterface
 }
 
 type cmdClientTest struct {
-	CmdInterface
+	awsvault.CmdInterface
 }
 
 type testCaseStruct struct {
@@ -55,7 +56,7 @@ func (cmdClientTest) Output() ([]byte, error) {
 	return []byte(*outputReturnValue), nil
 }
 
-func (commandLineClientTest) Command(name string, arg ...string) CmdInterface {
+func (commandLineClientTest) Command(name string, arg ...string) awsvault.CmdInterface {
 	commandCallCount++
 	commandInput = append([]string{name}, arg...)
 
@@ -80,7 +81,7 @@ func TestGetAccessKeyId(t *testing.T) {
 			setupTestCases()
 			t.Helper()
 
-			vault := NewOnePasswordVault(&commandLineClientTest{}, "test-vault", "test-item")
+			vault := awsvault.NewOnePasswordVault(&commandLineClientTest{}, "test-vault", "test-item")
 
 			method := reflect.ValueOf(vault).MethodByName(v.call)
 			returnValue := method.Call(nil)
@@ -103,11 +104,11 @@ func TestGetVaults(t *testing.T) {
 	setupTestCases()
 	t.Helper()
 
-	expectedOutput := []OpVault{}
+	expectedOutput := []awsvault.OpVault{}
 	i := 1
 	for i < 10 {
 		i++
-		expectedOutput = append(expectedOutput, OpVault{
+		expectedOutput = append(expectedOutput, awsvault.OpVault{
 			Id:      fmt.Sprintf("test-id-%d", i),
 			Name:    fmt.Sprintf("test-name-%d", i),
 			Version: i,
@@ -118,7 +119,7 @@ func TestGetVaults(t *testing.T) {
 	outputString := string(outputByte)
 	outputReturnValue = &outputString
 
-	vaults, err := GetVaults(&commandLineClientTest{})
+	vaults, err := awsvault.GetVaults(&commandLineClientTest{})
 	assert.Nil(t, err, "No errors expected")
 	assert.Equal(t, expectedOutput, vaults)
 	assert.Equal(t, []string{"op", "vault", "list", "--format", "json"}, commandInput)
@@ -128,11 +129,11 @@ func TestGetItems(t *testing.T) {
 	setupTestCases()
 	t.Helper()
 
-	expectedOutput := []OpItem{}
+	expectedOutput := []awsvault.OpItem{}
 	i := 1
 	for i < 10 {
 		i++
-		expectedOutput = append(expectedOutput, OpItem{
+		expectedOutput = append(expectedOutput, awsvault.OpItem{
 			Id:      fmt.Sprintf("test-id-%d", i),
 			Version: i,
 		})
@@ -142,7 +143,7 @@ func TestGetItems(t *testing.T) {
 	outputString := string(outputByte)
 	outputReturnValue = &outputString
 
-	items, err := GetItems(&commandLineClientTest{}, "vault-test")
+	items, err := awsvault.GetItems(&commandLineClientTest{}, "vault-test")
 	assert.Nil(t, err, "No errors expected")
 	assert.Equal(t, expectedOutput, items)
 	assert.Equal(t, []string{"op", "item", "list", "--vault", "vault-test", "--format", "json"}, commandInput)
@@ -152,11 +153,11 @@ func TestGetEntries(t *testing.T) {
 	setupTestCases()
 	t.Helper()
 
-	expectedOutput := []OpEntry{}
+	expectedOutput := []awsvault.OpEntry{}
 	i := 1
 	for i < 10 {
 		i++
-		expectedOutput = append(expectedOutput, OpEntry{
+		expectedOutput = append(expectedOutput, awsvault.OpEntry{
 			Id: fmt.Sprintf("test-id-%d", i),
 		})
 	}
@@ -165,7 +166,7 @@ func TestGetEntries(t *testing.T) {
 	outputString := fmt.Sprintf("{\"fields\":%s}", string(outputByte))
 	outputReturnValue = &outputString
 
-	items, err := GetEntries(&commandLineClientTest{}, "vault-test", "item-test")
+	items, err := awsvault.GetEntries(&commandLineClientTest{}, "vault-test", "item-test")
 	assert.Nil(t, err, "No errors expected")
 	assert.Equal(t, expectedOutput, items)
 	assert.Equal(t, []string{"op", "item", "get", "item-test", "--vault", "vault-test", "--format", "json"}, commandInput)
