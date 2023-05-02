@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"nextunit/op2aws/awsvault"
 	"nextunit/op2aws/opaws"
 	"os"
@@ -16,6 +16,7 @@ import (
 const FILEMODE = os.FileMode(int(0777))
 
 type AWSCredentialsCacheClient struct {
+	osClient    AWSCredentialsCacheOsClient
 	path        string
 	vault       string
 	item        string
@@ -23,13 +24,21 @@ type AWSCredentialsCacheClient struct {
 	assume_role string
 }
 
+type AWSCredentialsCacheOsClient interface {
+	Stat(name string) (fs.FileInfo, error)
+	MkdirAll(path string, perm fs.FileMode) error
+	WriteFile(filename string, data []byte, perm fs.FileMode) error
+	ReadFile(filename string) ([]byte, error)
+	Remove(name string) error
+}
+
 func (cache AWSCredentialsCacheClient) checkCacheDir() {
-	_, err := os.Stat(cache.path)
+	_, err := cache.osClient.Stat(cache.path)
 	if err == nil {
 		return
 	}
 
-	os.MkdirAll(cache.path, FILEMODE)
+	cache.osClient.MkdirAll(cache.path, FILEMODE)
 }
 
 func (cache AWSCredentialsCacheClient) getFilePath() string {
@@ -46,19 +55,19 @@ func (cache AWSCredentialsCacheClient) Store(credentials *sts.Credentials) error
 		return err
 	}
 
-	return ioutil.WriteFile(filepath, content, FILEMODE)
+	return cache.osClient.WriteFile(filepath, content, FILEMODE)
 }
 
 func (cache AWSCredentialsCacheClient) GetCache() (*sts.Credentials, error) {
 	cache.checkCacheDir()
 	filepath := cache.getFilePath()
 
-	_, err := os.Stat(filepath)
+	_, err := cache.osClient.Stat(filepath)
 	if err != nil {
 		return nil, nil
 	}
 
-	content, err := ioutil.ReadFile(filepath)
+	content, err := cache.osClient.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +76,7 @@ func (cache AWSCredentialsCacheClient) GetCache() (*sts.Credentials, error) {
 	json.Unmarshal(content, credentials)
 
 	if credentials.Expiration.Before(time.Now()) {
-		os.Remove(filepath)
+		cache.osClient.Remove(filepath)
 		return nil, nil
 	}
 
@@ -100,6 +109,6 @@ func (cache *AWSCredentialsCacheClient) AssumeRole(assume_role string) {
 	cache.assume_role = assume_role
 }
 
-func New(path string) *AWSCredentialsCacheClient {
-	return &AWSCredentialsCacheClient{path: path}
+func New(osClient AWSCredentialsCacheOsClient, path string) *AWSCredentialsCacheClient {
+	return &AWSCredentialsCacheClient{osClient: osClient, path: path}
 }

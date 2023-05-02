@@ -21,7 +21,7 @@ func runAwsCliCommand(vault, item, mfaArn, assumeRoleArn string, forceCache bool
 	awsClient.UseMFA(mfaArn)
 	awsClient.AssumeRole(assumeRoleArn)
 
-	cacheClient := cache.New(os.Getenv("HOME"))
+	cacheClient := cache.New(&cache.AWSCredentialsCacheOsClientDefault{}, os.Getenv("HOME"))
 	cacheClient.GenerateFromOP(opClient)
 	cacheClient.GenerateFromOPAWS(awsClient)
 
