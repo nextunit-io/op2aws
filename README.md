@@ -2,6 +2,8 @@
 CLI Tool to use 1password for credentials to login into AWS. It is possible to use it in connection with multifactor authentication (2FA)
 and assuming another role automatically.
 
+![Build Status](https://github.com/nextunit-io/op2aws/actions/workflows/main.yml/badge.svg)
+
 ## Installing
 
 You can download the executables for linux, windows and mac as release zip files in the [release](https://github.com/nextunit-io/op2aws/releases) area.
