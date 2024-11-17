@@ -13,6 +13,23 @@ import (
 type AWSConfig struct {
 	path   string
 	client AwsConfigInterface
+	parser ConfigParserInterface
+}
+
+type AWSConfigCredentialsModel struct {
+	RoleArn               string
+	SourceProfile         string
+	CredentialProcess     string
+	AwsAccessKeyId        string
+	AwsSecretAccessKey    string
+	AwsSessionToken       string
+	AwsSecurityToken      string
+	XPrincipalArn         string
+	XSecurityTokenExpires string
+}
+
+type AWSConfigModel struct {
+	Profile map[string]AWSConfigCredentialsModel
 }
 
 type AwsConfigInterface interface {
@@ -20,6 +37,7 @@ type AwsConfigInterface interface {
 	IsNotExist(err error) bool
 	WriteFile(filename string, data []byte, perm fs.FileMode) error
 	OpenFile(name string, flag int, perm fs.FileMode) (AwsConfigFileInterface, error)
+	ReadFile(filename string) ([]byte, error)
 }
 
 type AwsConfigFileInterface interface {
@@ -50,6 +68,10 @@ func (AwsConfigClientDefault) WriteFile(filename string, data []byte, perm fs.Fi
 
 func (AwsConfigClientDefault) OpenFile(name string, flag int, perm fs.FileMode) (AwsConfigFileInterface, error) {
 	return os.OpenFile(name, flag, perm)
+}
+
+func (AwsConfigClientDefault) ReadFile(filename string) ([]byte, error) {
+	return ioutil.ReadFile(filename)
 }
 
 func (c AWSConfig) GetPath() string {
@@ -91,6 +113,25 @@ func GetProfileBody(profileName, vault, item, assumeRole, mfa, labelAccessKey, l
 	)
 }
 
+func (c AWSConfig) ReadConfigFile() (*AWSConfigModel, error) {
+	_, err := c.client.Stat(c.path)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := c.client.ReadFile(c.path)
+	if err != nil {
+		return nil, err
+	}
+
+	awsConfig, err := c.parser.Parse(string(data))
+	if err != nil {
+		return nil, err
+	}
+
+	return awsConfig, nil
+}
+
 func (c AWSConfig) WriteProfile(body string) error {
 	_, err := c.client.Stat(c.path)
 	if err != nil {
@@ -113,9 +154,10 @@ func (c AWSConfig) WriteProfile(body string) error {
 	return nil
 }
 
-func NewAwsConfig(client AwsConfigInterface, path string) *AWSConfig {
+func NewAwsConfig(client AwsConfigInterface, parser ConfigParserInterface, path string) *AWSConfig {
 	return &AWSConfig{
 		client: client,
+		parser: parser,
 		path:   path,
 	}
 }

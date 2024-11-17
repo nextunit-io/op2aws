@@ -99,7 +99,7 @@ func runAwsConfigCommand(configPath string) {
 		}, &awsSecretAccessKeyFieldDefault, survey.WithValidator(survey.Required))
 	}
 
-	c := opaws.NewAwsConfig(&opaws.AwsConfigClientDefault{}, opaws.AWS_FILE_PATH)
+	c := opaws.NewAwsConfig(&opaws.AwsConfigClientDefault{}, &opaws.ConfigParser{}, opaws.AWS_FILE_PATH)
 	body := opaws.GetProfileBody(
 		profileName,
 		vaultName,

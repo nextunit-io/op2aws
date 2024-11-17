@@ -47,6 +47,14 @@ type awsConfigFileMock struct {
 	opaws.AwsConfigFileInterface
 }
 
+type testConfigParser struct {
+	opaws.ConfigParserInterface
+}
+
+func (testConfigParser) Parse(data string) (*opaws.AWSConfigModel, error) {
+	return nil, nil
+}
+
 var (
 	fileInfoReturnValue        fs.FileInfo
 	errorIsNotExistReturnValue bool
@@ -226,7 +234,7 @@ func TestWriteProfileFileExists(t *testing.T) {
 	t.Helper()
 	setupTestCases()
 
-	client := opaws.NewAwsConfig(&testAwsConfigMock{}, "test-path")
+	client := opaws.NewAwsConfig(&testAwsConfigMock{}, &testConfigParser{}, "test-path")
 
 	err := client.WriteProfile("test-body")
 
@@ -245,4 +253,15 @@ func TestWriteProfileFileExists(t *testing.T) {
 		perm: 0644,
 	}, openFileInput[0])
 	assert.Equal("test-body", writeStringInput)
+}
+
+func TestReadConfigFile(t *testing.T) {
+	t.Helper()
+	fmt.Println("JETZT")
+
+	client := opaws.NewAwsConfig(opaws.AwsConfigClientDefault{}, &opaws.ConfigParser{}, opaws.AWS_FILE_PATH)
+
+	fmt.Print(client.ReadConfigFile())
+
+	os.Exit(1)
 }
